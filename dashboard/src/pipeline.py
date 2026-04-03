@@ -20,6 +20,9 @@ from scoring import score_company, get_priority, get_signal_summary
 import sources.funding_rss as funding_rss
 import sources.wttj_jobs as wttj_jobs
 import sources.bpifrance as bpifrance
+import sources.indeed_jobs as indeed_jobs
+import sources.cadremploi_jobs as cadremploi_jobs
+import sources.ats_jobs as ats_jobs
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -140,7 +143,73 @@ def run_pipeline(verbose: bool = True) -> dict:
     if verbose:
         console.print(f"[cyan]→ {stats['jobs']} nouvelles offres tech[/cyan]")
 
-    # ─── Step 4: Update company scores ───────────────────────────────────────
+    # ─── Step 3b: ATS (Greenhouse + Lever) ───────────────────────────────────
+    if verbose:
+        console.rule("[bold yellow]💼 Offres tech ATS (Greenhouse / Lever)")
+
+    for job in ats_jobs.run():
+        company_name = normalize_name(job.get("company_name", ""))
+        if not company_name:
+            continue
+        is_new = insert_job(
+            company_name,
+            job_title=job.get("job_title", ""),
+            tech_tags="[]",
+            location=job.get("location", ""),
+            job_url=job.get("job_url", ""),
+            source=job.get("source", "ats"),
+            published_at=job.get("published_at", datetime.now().isoformat()),
+        )
+        if is_new:
+            stats["jobs"] += 1
+            company_jobs[company_name].append(job)
+
+    # ─── Step 3c: Indeed France ───────────────────────────────────────────────
+    if verbose:
+        console.rule("[bold yellow]💼 Offres tech Indeed France")
+
+    for job in indeed_jobs.run():
+        company_name = normalize_name(job.get("company_name", ""))
+        if not company_name:
+            continue
+        is_new = insert_job(
+            company_name,
+            job_title=job.get("job_title", ""),
+            tech_tags="[]",
+            location=job.get("location", ""),
+            job_url=job.get("job_url", ""),
+            source="indeed",
+            published_at=job.get("published_at", datetime.now().isoformat()),
+        )
+        if is_new:
+            stats["jobs"] += 1
+            company_jobs[company_name].append(job)
+
+    # ─── Step 3c: Cadremploi ──────────────────────────────────────────────────
+    if verbose:
+        console.rule("[bold yellow]💼 Offres tech Cadremploi")
+
+    for job in cadremploi_jobs.run():
+        company_name = normalize_name(job.get("company_name", ""))
+        if not company_name:
+            continue
+        is_new = insert_job(
+            company_name,
+            job_title=job.get("job_title", ""),
+            tech_tags="[]",
+            location=job.get("location", ""),
+            job_url=job.get("job_url", ""),
+            source="cadremploi",
+            published_at=job.get("published_at", datetime.now().isoformat()),
+        )
+        if is_new:
+            stats["jobs"] += 1
+            company_jobs[company_name].append(job)
+
+    if verbose:
+        console.print(f"[cyan]→ {stats['jobs']} nouvelles offres tech au total[/cyan]")
+
+    # ─── Step 4: Update company signals ──────────────────────────────────────
     if verbose:
         console.rule("[bold yellow]🎯 Calcul des scores")
 
