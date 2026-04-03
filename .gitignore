@@ -33,3 +33,8 @@ hfuzz_workspace
 js/packages/web/.env
 traits
 traits-configuration.json
+dashboard/data/
+dashboard/src/__pycache__/
+dashboard/src/sources/__pycache__/
+scraper/src/__pycache__/
+scraper/src/scrapers/__pycache__/
