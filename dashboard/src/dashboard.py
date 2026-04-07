@@ -189,6 +189,36 @@ def render_sidebar():
     if st.sidebar.button("🔄 Actualiser maintenant", use_container_width=True, type="primary"):
         run_pipeline_now()
 
+    # ── Email digest
+    st.sidebar.divider()
+    st.sidebar.subheader("📧 Alertes email")
+
+    try:
+        from alerts.email_sender import is_configured, send_daily_digest
+        email_ok = is_configured()
+    except Exception:
+        email_ok = False
+
+    if email_ok:
+        if st.sidebar.button("📤 Envoyer le digest maintenant", use_container_width=True):
+            with st.spinner("📧 Envoi en cours…"):
+                ok = send_daily_digest(days_back=7)
+            if ok:
+                st.sidebar.success("✅ Digest envoyé !")
+            else:
+                st.sidebar.error("❌ Échec — vérifie le .env")
+        st.sidebar.caption("⏰ Envoi auto chaque matin à 8h00")
+    else:
+        st.sidebar.info(
+            "Configure ton email dans `dashboard/.env` :\n\n"
+            "```\nALERT_EMAIL_FROM=toi@gmail.com\n"
+            "ALERT_EMAIL_PASSWORD=app_password\n"
+            "ALERT_EMAIL_TO=isaac@techunt.fr\n```"
+        )
+        st.sidebar.caption(
+            "[Créer un App Password Gmail →](https://myaccount.google.com/apppasswords)"
+        )
+
     st.sidebar.divider()
     st.sidebar.subheader("🔍 Filtres")
 
